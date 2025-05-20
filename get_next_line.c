@@ -6,7 +6,7 @@
 /*   By: unadoroz <unadoroz@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/13 09:12:14 by unadoroz          #+#    #+#             */
-/*   Updated: 2025/05/20 10:56:02 by unadoroz         ###   ########.fr       */
+/*   Updated: 2025/05/20 11:28:01 by unadoroz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,11 @@
 
 static int	read_to_buffer(int fd, char **buffer)
 {
-	char	temp[BUFFER_SIZE + 1];
+	char	*temp;
 	ssize_t	bytes_to_read;
 	char	*temp_buffer;
 	
+	temp = malloc(BUFFER_SIZE + 1);
 	while (!ft_strchr(*buffer, '\n'))
 	{
 		bytes_to_read = read(fd, temp, BUFFER_SIZE);
@@ -29,6 +30,7 @@ static int	read_to_buffer(int fd, char **buffer)
 		temp[bytes_to_read] = '\0';
 		temp_buffer = ft_strjoin(*buffer, temp);
 		free(*buffer);
+		free(temp);
 		*buffer = temp_buffer;
 	}
 	return(0);
