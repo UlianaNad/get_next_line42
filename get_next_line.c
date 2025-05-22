@@ -6,94 +6,115 @@
 /*   By: unadoroz <unadoroz@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/13 09:12:14 by unadoroz          #+#    #+#             */
-/*   Updated: 2025/05/20 11:28:01 by unadoroz         ###   ########.fr       */
+/*   Updated: 2025/05/22 13:22:09 by unadoroz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <stdio.h>
 
-static int	read_to_buffer(int fd, char **buffer)
-{
-	char	*temp;
-	ssize_t	bytes_to_read;
-	char	*temp_buffer;
-	
-	temp = malloc(BUFFER_SIZE + 1);
-	while (!ft_strchr(*buffer, '\n'))
-	{
-		bytes_to_read = read(fd, temp, BUFFER_SIZE);
-		if (bytes_to_read < 0)
-			return (-1);
-		if (bytes_to_read == 0)
-			break;
-		temp[bytes_to_read] = '\0';
-		temp_buffer = ft_strjoin(*buffer, temp);
-		free(*buffer);
-		free(temp);
-		*buffer = temp_buffer;
-	}
-	return(0);
-}
-
-static char	*get_line(char **buffer)
+char	*get_line(char *str)
 {
 	char	*line;
-	char	*rest;
-	char	*newline;
-	size_t	length;
+	char	*new_line;
 
-	if (!*buffer || !**buffer)
+	if (!str)
 		return (NULL);
-	newline = ft_strchr(*buffer, '\n');
-	if (newline)
-		length = newline - *buffer + 1;
+	new_line = ft_strchr(str, '\n');
+	if (new_line)
+		line = ft_substr(str, 0, ft_strlen(str) - ft_strlen(new_line) + 1);
 	else
-		length = ft_strlen(*buffer);
-	line = ft_substr(*buffer, 0, length);
-	rest = ft_strdup(*buffer + length);
-	free (*buffer);
-	*buffer = rest;
+		line = ft_substr(str, 0, ft_strlen(str));
 	return (line);
 }
 
-char *get_next_line(int fd)
+char	*update_saved(char *str)
+{
+	char	*rest;
+	char	*temp;
+
+	if (!str)
+		return (NULL);
+	temp = ft_strchr(str, '\n');
+	if (temp && *(temp + 1))
+		rest = ft_strdup(temp + 1);
+	else
+		rest = NULL;
+	free (str);
+	return (rest);
+}
+
+char	*ft_strjoin_line(char const *s1, char const *s2)
+{
+	int		i;
+	int		j;
+	char	*result;
+
+	i = 0;
+	j = 0;
+	if (!s1 || !s2)
+		return (NULL);
+	if (!s1)
+		return (ft_strdup(s2));
+	if (!s2)
+		return (ft_strdup(s1));
+	result = (char *)malloc(sizeof(char) * (ft_strlen(s1) + ft_strlen(s2) + 1));
+	if (!result)
+		return (NULL);
+	while (s1[i])
+	{
+		result[i] = s1[i];
+		i++;
+	}
+	while (s2[j])
+		result[i++] = s2[j++];
+	result[i] = '\0';
+	return (result);
+}
+
+char	*read_untill_nl(char *saved, int fd)
 {	
-	static char *buffer;
-	
+	ssize_t		bytes_to_read;
+	char		*buffer;
+	char		*temp;
+
+	buffer = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buffer)
+		return (NULL);
+	bytes_to_read = 1;
+	while (!ft_strchr(saved, '\n') && bytes_to_read > 0)
+	{
+		bytes_to_read = read(fd, buffer, BUFFER_SIZE);
+		if (bytes_to_read >= 0)
+			buffer[bytes_to_read] = '\0';
+		else
+			return (free (buffer), NULL);
+		temp = ft_strjoin_line(saved, buffer);
+		if (!temp)
+			return (free (buffer), NULL);
+		free (saved);
+		saved = temp;
+	}
+	free (buffer);
+	return (saved);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*saved;
+	char		*line;
+
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	if (!buffer)
-		buffer = ft_strdup("");
-	if (read_to_buffer (fd, &buffer) == -1)
-		return (free(buffer), buffer = NULL, NULL);
-	return (get_line(&buffer));
-}
-
-/*
-int main(void)
-{
-	static int count = 1;
-	char *s;
-	int fd = open("test.txt", O_RDONLY);
-
-	if (fd == -1)
+	if (!saved)
+		saved = ft_strdup("");
+	saved = read_untill_nl(saved, fd);
+	if (!saved || saved[0] == '\0')
 	{
-		printf("Error opening file\n");
-		return(1);
+		free(saved);
+		saved = NULL;
+		return (NULL);
 	}
-	while(1)
-	{
-		printf("ft_calloc#[%d]---", count++);
-		s = get_next_line(fd);
-		if (s == NULL)
-			break;
-		count++;
-		printf("[%d]:%s\n",count,s);
-		free(s);
-		s = NULL;
-	}
-	close(fd);
-	return (0);
+	line = get_line(saved);
+	saved = update_saved(saved);
+	return (line);
 }
-*/
