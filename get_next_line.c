@@ -6,7 +6,7 @@
 /*   By: unadoroz <unadoroz@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/13 09:12:14 by unadoroz          #+#    #+#             */
-/*   Updated: 2025/05/22 13:22:09 by unadoroz         ###   ########.fr       */
+/*   Updated: 2025/05/22 15:27:05 by unadoroz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ char	*ft_strjoin_line(char const *s1, char const *s2)
 
 	i = 0;
 	j = 0;
-	if (!s1 || !s2)
+	if (!s1 && !s2)
 		return (NULL);
 	if (!s1)
 		return (ft_strdup(s2));
@@ -71,15 +71,11 @@ char	*ft_strjoin_line(char const *s1, char const *s2)
 	return (result);
 }
 
-char	*read_untill_nl(char *saved, int fd)
+char	*read_untill_nl(char *saved, int fd, char *buffer)
 {	
 	ssize_t		bytes_to_read;
-	char		*buffer;
 	char		*temp;
 
-	buffer = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!buffer)
-		return (NULL);
 	bytes_to_read = 1;
 	while (!ft_strchr(saved, '\n') && bytes_to_read > 0)
 	{
@@ -87,27 +83,37 @@ char	*read_untill_nl(char *saved, int fd)
 		if (bytes_to_read >= 0)
 			buffer[bytes_to_read] = '\0';
 		else
-			return (free (buffer), NULL);
+		{
+			free (buffer);
+			free(saved);
+			return (NULL);
+		}
 		temp = ft_strjoin_line(saved, buffer);
 		if (!temp)
-			return (free (buffer), NULL);
+		{
+			free(buffer);
+			return (NULL);
+		}
 		free (saved);
 		saved = temp;
 	}
-	free (buffer);
-	return (saved);
+	return (free(buffer), saved);
 }
 
 char	*get_next_line(int fd)
 {
+	char		*buffer;
 	static char	*saved;
 	char		*line;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
+	buffer = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buffer)
+		return (NULL);
 	if (!saved)
 		saved = ft_strdup("");
-	saved = read_untill_nl(saved, fd);
+	saved = read_untill_nl(saved, fd, buffer);
 	if (!saved || saved[0] == '\0')
 	{
 		free(saved);
