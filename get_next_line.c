@@ -102,9 +102,9 @@ char	*read_untill_nl(char *saved, int fd, char *buffer)
 
 char	*get_next_line(int fd)
 {
-	char		*buffer;
 	static char	*saved;
 	char		*line;
+char		*buffer;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
